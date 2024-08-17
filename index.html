@@ -5,8 +5,8 @@
  Author: @hamsteruf
  GitHub: https://github.com/hamsteruf/File-Protection-Utility/
 
- This script provides functionality to encrypt and decrypt files. The encryption
- splits the file into two parts, and the decryption combines these parts to retrieve
+ This script provides functionality to split and merge .enc files. The program
+ splits the file into two parts, or merges these parts to retrieve
  the original file.
 
 -->
@@ -40,14 +40,14 @@
 <body>
     <h1>File Protection Utility</h1>
     <div class="container">
-        <button style="width: 200px; height: 50px;" onclick="encryptFile()">Encrypt File</button>
-        <button style="width: 200px; height: 50px;" onclick="decryptFiles()">Decrypt Files</button>
+        <button style="width: 200px; height: 50px;" onclick="encryptFile()">Split File</button>
+        <button style="width: 200px; height: 50px;" onclick="decryptFiles()">Merge Files</button>
     </div>
     <div id="instructions">
         <h3>Instructions:</h3>
         <p>
-            1. To encrypt a file, click 'Encrypt File' and select a file.<br>
-            2. To decrypt files, click 'Decrypt Files', and select the two encrypted parts.<br>
+            1. To split a file, click 'Split File' and select a file.<br>
+            2. To merge files, click 'Merge Files', and select the two split parts.<br>
             3. The program will automatically handle file operations and save results.
         </p>
         <p>GitHub Repository: <a id="github-link" onclick="openGitHub()">https://github.com/hamsteruf/File-Protection-Utility/</a></p>
