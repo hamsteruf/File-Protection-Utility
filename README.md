@@ -35,6 +35,8 @@ The File Protection Utility is a Python-based tool for encrypting and decrypting
 
 ## Installation
 
+### Online version
+You can try the online version at https://hamsteruf.github.io/File-Protection-Utility/ before downloading anything.
 ### Prerequisites
 
 - Python 3.x
