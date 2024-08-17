@@ -1,0 +1,213 @@
+<!--
+
+ File Protection Utility
+
+ Author: @hamsteruf
+ GitHub: https://github.com/hamsteruf/File-Protection-Utility/
+
+ This script provides functionality to encrypt and decrypt files. The encryption
+ splits the file into two parts, and the decryption combines these parts to retrieve
+ the original file.
+
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Protection Utility</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 5px;
+        }
+        .container {
+            margin: 20px 0;
+        }
+        button {
+            margin: 30px;
+        }
+        #instructions {
+            margin: 20px 0;
+        }
+        #github-link {
+            color: blue;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>File Protection Utility</h1>
+    <div class="container">
+        <button style="width: 200px; height: 50px;" onclick="encryptFile()">Encrypt File</button>
+        <button style="width: 200px; height: 50px;" onclick="decryptFiles()">Decrypt Files</button>
+    </div>
+    <div id="instructions">
+        <h3>Instructions:</h3>
+        <p>
+            1. To encrypt a file, click 'Encrypt File' and select a file.<br>
+            2. To decrypt files, click 'Decrypt Files', and select the two encrypted parts.<br>
+            3. The program will automatically handle file operations and save results.
+        </p>
+        <p>GitHub Repository: <a id="github-link" onclick="openGitHub()">https://github.com/hamsteruf/File-Protection-Utility/</a></p>
+    </div>
+    
+    <script>
+        const SEPARATOR = '1'.repeat(64);  // Separator to distinguish filename from file content
+
+        function openGitHub() {
+            window.open('https://github.com/hamsteruf/File-Protection-Utility/', '_blank');
+        }
+
+        function encryptFile() {
+            const inputFile = document.createElement('input');
+            inputFile.type = 'file';
+            inputFile.accept = '*/*';
+            inputFile.onchange = async function () {
+                const file = inputFile.files[0];
+                if (file) {
+                    const fileContent = await file.arrayBuffer();
+                    const fileBytes = new Uint8Array(fileContent);
+
+                    // Convert file bytes to binary string
+                    let fileBits = '';
+                    for (let i = 0; i < fileBytes.length; i++) {
+                        fileBits += fileBytes[i].toString(2).padStart(8, '0');
+                    }
+
+                    // Convert filename to binary string
+                    const filename = file.name;
+                    const filenameBits = [...filename].map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join('');
+
+                    // Combine filename bits with file content bits
+                    const combinedBits = filenameBits + SEPARATOR + fileBits;
+                    const part1Bits = [];
+                    const part2Bits = [];
+
+                    // Randomly split combined bits into two parts
+                    for (let bit of combinedBits) {
+                        if (bit === '1') {
+                            // Randomly choose the same bit for both parts
+                            const bitValue = Math.random() < 0.5 ? '0' : '1';
+                            part1Bits.push(bitValue);
+                            part2Bits.push(bitValue);
+                        } else {
+                            // Randomly assign different bits for each part
+                            const bit1 = Math.random() < 0.5 ? '0' : '1';
+                            const bit2 = (bit1 === '0') ? '1' : '0';
+                            part1Bits.push(bit1);
+                            part2Bits.push(bit2);
+                        }
+                    }
+
+                    function bitsToBytes(bits) {
+                        const bytes = [];
+                        for (let i = 0; i < bits.length; i += 8) {
+                            bytes.push(parseInt(bits.slice(i, i + 8), 2));
+                        }
+                        return new Uint8Array(bytes);
+                    }
+
+                    const part1Bytes = bitsToBytes(part1Bits.join(''));
+                    const part2Bytes = bitsToBytes(part2Bits.join(''));
+
+                    // Save files with fixed names
+                    const part1Blob = new Blob([part1Bytes], { type: 'application/octet-stream' });
+                    const part2Blob = new Blob([part2Bytes], { type: 'application/octet-stream' });
+
+                    const part1Url = URL.createObjectURL(part1Blob);
+                    const part2Url = URL.createObjectURL(part2Blob);
+
+                    const a1 = document.createElement('a');
+                    a1.href = part1Url;
+                    a1.download = 'first_file.enc';
+                    a1.click();
+
+                    const a2 = document.createElement('a');
+                    a2.href = part2Url;
+                    a2.download = 'second_file.enc';
+                    a2.click();
+                }
+            };
+            inputFile.click();
+        }
+
+        function decryptFiles() {
+            const part1Input = document.createElement('input');
+            part1Input.type = 'file';
+            part1Input.accept = '.enc';
+            part1Input.onchange = function () {
+                const part1File = part1Input.files[0];
+                if (part1File) {
+                    const part1Reader = new FileReader();
+                    part1Reader.onload = function () {
+                        const part1ArrayBuffer = part1Reader.result;
+                        const part1Bytes = new Uint8Array(part1ArrayBuffer);
+
+                        const part2Input = document.createElement('input');
+                        part2Input.type = 'file';
+                        part2Input.accept = '.enc';
+                        part2Input.onchange = function () {
+                            const part2File = part2Input.files[0];
+                            if (part2File) {
+                                const part2Reader = new FileReader();
+                                part2Reader.onload = function () {
+                                    const part2ArrayBuffer = part2Reader.result;
+                                    const part2Bytes = new Uint8Array(part2ArrayBuffer);
+
+                                    function bytesToBits(bytes) {
+                                        return Array.from(bytes).map(byte => byte.toString(2).padStart(8, '0')).join('');
+                                    }
+
+                                    const bitString1 = bytesToBits(part1Bytes);
+                                    const bitString2 = bytesToBits(part2Bytes);
+
+                                    let originalBits = '';
+                                    for (let i = 0; i < bitString1.length; i++) {
+                                        originalBits += (bitString1[i] === bitString2[i]) ? '1' : '0';
+                                    }
+
+                                    const separatorIndex = originalBits.indexOf(SEPARATOR);
+
+                                    if (separatorIndex === -1) {
+                                        alert('Separator not found in combined bit string.');
+                                        return;
+                                    }
+
+                                    const filenameBits = originalBits.slice(0, separatorIndex);
+                                    const fileBits = originalBits.slice(separatorIndex + SEPARATOR.length);
+
+                                    function bitsToString(bits) {
+                                        let str = '';
+                                        for (let i = 0; i < bits.length; i += 8) {
+                                            str += String.fromCharCode(parseInt(bits.slice(i, i + 8), 2));
+                                        }
+                                        return str;
+                                    }
+
+                                    const originalFilename = bitsToString(filenameBits);
+                                    const originalBytes = new Uint8Array(fileBits.match(/.{1,8}/g).map(byte => parseInt(byte, 2)));
+
+                                    const fileBlob = new Blob([originalBytes], { type: 'application/octet-stream' });
+                                    const fileUrl = URL.createObjectURL(fileBlob);
+                                    const a = document.createElement('a');
+                                    a.href = fileUrl;
+                                    a.download = originalFilename;
+                                    a.click();
+                                };
+                                part2Reader.readAsArrayBuffer(part2File);
+                            }
+                        };
+                        part2Input.click();
+                    };
+                    part1Reader.readAsArrayBuffer(part1File);
+                }
+            };
+            part1Input.click();
+        }
+    </script>
+</body>
+</html>
+
+<!-- PS: You can also DM me on Discord: @hamsteruf :)-->
