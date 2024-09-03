@@ -5,7 +5,7 @@ The File Protection Utility is a Python-based tool designed to split and merge f
 
 ## How It Works
 
-### Splitting (formerly Encryption)
+### Splitting
 1. **File Selection**: The user selects a file to split.
 2. **Binary Conversion**: The file's content and filename are converted to binary strings.
 3. **Combining Data**: The filename (in binary) and file content (in binary) are concatenated, separated by a specific separator.
@@ -15,7 +15,7 @@ The File Protection Utility is a Python-based tool designed to split and merge f
 5. **File Saving**:
    - The two parts are saved as `first_file.enc` and `second_file.enc`.
 
-### Merging (formerly Decryption)
+### Merging
 1. **File Selection**: The user selects the two encrypted files (`first_file.enc` and `second_file.enc`).
 2. **Binary Extraction**:
    - Each file is read, and the binary data is extracted.
@@ -27,8 +27,12 @@ The File Protection Utility is a Python-based tool designed to split and merge f
 ## Features
 - Splits a file into two parts.
 - Merges files back to their original state using the two encrypted parts.
-- User-friendly graphical interface with buttons for splitting and merging.
-- Auto-detects filenames for merging if not provided.
+- User-friendly graphical interface with buttons for splitting, merging and toggling dark modes, instructions and a GitHub repository link.
+- Auto-detects filenames for merging if they are in the same folder as the script, otherwise the user has to select them.
+- **Progress Bar**: Added to show the status of file operations (splitting and merging).
+- **Dark Mode**: A toggle to switch between light and dark themes for the user interface.
+- **Error copying**: User can now copy Errors.
+- **Secure Deletion**: The original files are now overwritten before they get deleted.
 
 ## Installation
 
@@ -48,8 +52,10 @@ You can try the online version at [https://hamsteruf.github.io/File-Protection-U
     ```bash
     cd File-Protection-Utility
     ```
-3. **Install dependencies:**
-   - If you use any additional packages, make sure to install them. The basic script uses Tkinter, which is included with Python.
+3. **run the python script or open the html**
+   ```bash
+   python3 FileProtectionUtility.py
+   ```
 
 ## Usage
 
@@ -58,11 +64,12 @@ You can try the online version at [https://hamsteruf.github.io/File-Protection-U
 #### Split a File:
 1. Click the "Split File" button.
 2. Select the file you want to split. The tool will generate two files named `first_file.enc` and `second_file.enc`.
+3. If you're using the html or online version, allow the browser to download multiple files at once.
 
 #### Merge Files:
 1. Click the "Merge Files" button.
-2. Select the two encrypted files (`first_file.enc` and `second_file.enc`).
-3. The tool will reconstruct and save the original file.
+2. If the two split files aren't in the same folder as the script, select the them (`first_file.enc` and `second_file.enc`).
+3. The tool will reconstruct and save the original file in the folder where the script is located / in the Downloads folder if you use the html or online version.
 
 ### Command-Line Options
 - `-s`, `--split [filename]`: Split the specified file into two parts.
@@ -73,4 +80,4 @@ You can try the online version at [https://hamsteruf.github.io/File-Protection-U
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Contact
-For any issues or suggestions, please contact me on Discord: @hamsteruf
+For any issues or suggestions, please contact me on Discord: @hamsteruf or use the Issues tab.
