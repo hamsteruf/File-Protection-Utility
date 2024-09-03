@@ -21,12 +21,16 @@
         body {
             font-family: Arial, sans-serif;
             margin: 5px;
+            background-color: lightgray;
+            color: black;
         }
         .container {
             margin: 20px 0;
         }
         button {
             margin: 30px;
+            width: 200px;
+            height: 50px;
         }
         #instructions {
             margin: 20px 0;
@@ -35,13 +39,27 @@
             color: blue;
             cursor: pointer;
         }
+        #progress-bar {
+            width: 300px;
+            height: 20px;
+            background-color: lightgray;
+            border-radius: 5px;
+            overflow: hidden;
+            display: none;
+        }
+        #progress-bar-inner {
+            height: 100%;
+            background-color: green;
+            width: 0;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
     <h1>File Protection Utility</h1>
     <div class="container">
-        <button style="width: 200px; height: 50px;" onclick="encryptFile()">Split File</button>
-        <button style="width: 200px; height: 50px;" onclick="decryptFiles()">Merge Files</button>
+        <button onclick="encryptFile()">Split File</button>
+        <button onclick="decryptFiles()">Merge Files</button>
     </div>
     <div id="instructions">
         <h3>Instructions:</h3>
@@ -52,12 +70,27 @@
         </p>
         <p>GitHub Repository: <a id="github-link" onclick="openGitHub()">https://github.com/hamsteruf/File-Protection-Utility/</a></p>
     </div>
-    
+    <div id="progress-bar">
+        <div id="progress-bar-inner"></div>
+    </div>
+    <button id="dark-mode-toggle">Toggle Dark Mode</button>
+
     <script>
         const SEPARATOR = '1'.repeat(64);  // Separator to distinguish filename from file content
+        const PROGRESS_THRESHOLD = 500 * 1024 * 1024;  // 500 MB
+        let operationCancelled = false;
+        let darkMode = false;
 
         function openGitHub() {
             window.open('https://github.com/hamsteruf/File-Protection-Utility/', '_blank');
+        }
+
+        function updateProgressBar(value, maxValue) {
+            const progressBar = document.getElementById('progress-bar');
+            const progressBarInner = document.getElementById('progress-bar-inner');
+            progressBar.style.display = 'block';
+            const progress = (value / maxValue) * 100;
+            progressBarInner.style.width = progress + '%';
         }
 
         function encryptFile() {
@@ -69,31 +102,30 @@
                 if (file) {
                     const fileContent = await file.arrayBuffer();
                     const fileBytes = new Uint8Array(fileContent);
+                    const fileSize = file.size;
 
-                    // Convert file bytes to binary string
+                    if (fileSize > PROGRESS_THRESHOLD) {
+                        updateProgressBar(0, fileSize);
+                    }
+
                     let fileBits = '';
                     for (let i = 0; i < fileBytes.length; i++) {
                         fileBits += fileBytes[i].toString(2).padStart(8, '0');
                     }
 
-                    // Convert filename to binary string
                     const filename = file.name;
                     const filenameBits = [...filename].map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join('');
 
-                    // Combine filename bits with file content bits
                     const combinedBits = filenameBits + SEPARATOR + fileBits;
                     const part1Bits = [];
                     const part2Bits = [];
 
-                    // Randomly split combined bits into two parts
                     for (let bit of combinedBits) {
                         if (bit === '1') {
-                            // Randomly choose the same bit for both parts
                             const bitValue = Math.random() < 0.5 ? '0' : '1';
                             part1Bits.push(bitValue);
                             part2Bits.push(bitValue);
                         } else {
-                            // Randomly assign different bits for each part
                             const bit1 = Math.random() < 0.5 ? '0' : '1';
                             const bit2 = (bit1 === '0') ? '1' : '0';
                             part1Bits.push(bit1);
@@ -112,7 +144,6 @@
                     const part1Bytes = bitsToBytes(part1Bits.join(''));
                     const part2Bytes = bitsToBytes(part2Bits.join(''));
 
-                    // Save files with fixed names
                     const part1Blob = new Blob([part1Bytes], { type: 'application/octet-stream' });
                     const part2Blob = new Blob([part2Bytes], { type: 'application/octet-stream' });
 
@@ -128,6 +159,10 @@
                     a2.href = part2Url;
                     a2.download = 'second_file.enc';
                     a2.click();
+
+                    if (fileSize > PROGRESS_THRESHOLD) {
+                        updateProgressBar(fileSize, fileSize);
+                    }
                 }
             };
             inputFile.click();
@@ -156,43 +191,36 @@
                                     const part2ArrayBuffer = part2Reader.result;
                                     const part2Bytes = new Uint8Array(part2ArrayBuffer);
 
-                                    function bytesToBits(bytes) {
-                                        return Array.from(bytes).map(byte => byte.toString(2).padStart(8, '0')).join('');
-                                    }
+                                    const bitString1 = Array.from(part1Bytes).map(byte => byte.toString(2).padStart(8, '0')).join('');
+                                    const bitString2 = Array.from(part2Bytes).map(byte => byte.toString(2).padStart(8, '0')).join('');
 
-                                    const bitString1 = bytesToBits(part1Bytes);
-                                    const bitString2 = bytesToBits(part2Bytes);
-
-                                    let originalBits = '';
-                                    for (let i = 0; i < bitString1.length; i++) {
-                                        originalBits += (bitString1[i] === bitString2[i]) ? '1' : '0';
-                                    }
+                                    const originalBits = bitString1.split('').map((b1, i) => b1 === bitString2[i] ? '1' : '0').join('');
 
                                     const separatorIndex = originalBits.indexOf(SEPARATOR);
-
                                     if (separatorIndex === -1) {
-                                        alert('Separator not found in combined bit string.');
+                                        alert("Error: Separator not found in combined bit string.");
                                         return;
                                     }
 
-                                    const filenameBits = originalBits.slice(0, separatorIndex);
-                                    const fileBits = originalBits.slice(separatorIndex + SEPARATOR.length);
+                                    const filenameBits = originalBits.substring(0, separatorIndex);
+                                    const fileBits = originalBits.substring(separatorIndex + SEPARATOR.length);
 
                                     function bitsToString(bits) {
-                                        let str = '';
+                                        const chars = [];
                                         for (let i = 0; i < bits.length; i += 8) {
-                                            str += String.fromCharCode(parseInt(bits.slice(i, i + 8), 2));
+                                            chars.push(String.fromCharCode(parseInt(bits.substring(i, i + 8), 2)));
                                         }
-                                        return str;
+                                        return chars.join('');
                                     }
 
                                     const originalFilename = bitsToString(filenameBits);
                                     const originalBytes = new Uint8Array(fileBits.match(/.{1,8}/g).map(byte => parseInt(byte, 2)));
 
-                                    const fileBlob = new Blob([originalBytes], { type: 'application/octet-stream' });
-                                    const fileUrl = URL.createObjectURL(fileBlob);
+                                    const blob = new Blob([originalBytes], { type: 'application/octet-stream' });
+                                    const url = URL.createObjectURL(blob);
+
                                     const a = document.createElement('a');
-                                    a.href = fileUrl;
+                                    a.href = url;
                                     a.download = originalFilename;
                                     a.click();
                                 };
@@ -206,6 +234,12 @@
             };
             part1Input.click();
         }
+
+        document.getElementById('dark-mode-toggle').onclick = function () {
+            darkMode = !darkMode;
+            document.body.style.backgroundColor = darkMode ? 'black' : 'lightgray';
+            document.body.style.color = darkMode ? 'lightgray' : 'black';
+        };
     </script>
 </body>
 </html>
